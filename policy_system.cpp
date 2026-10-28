@@ -1,25 +1,112 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
 using namespace std;
 
-struct Customer
+class Customer
 {
-    int id;
-    string name;
-    int age;
-    string phone;
+public:
+    int id, age;
+    string name, phone;
+
+    void addCustomer()
+    {
+        cout << "Enter customer name: ";
+        cin >> ws;
+        getline(cin, name);
+
+        cout << "Enter age: ";
+        cin >> age;
+
+        cout << "Enter phone: ";
+        cin >> phone;
+    }
+
+    void display()
+    {
+        cout << "\nCustomer ID: " << id;
+        cout << "\nName: " << name;
+        cout << "\nAge: " << age;
+        cout << "\nPhone: " << phone << "\n";
+    }
+
+    void save()
+    {
+        ofstream file("customers.txt", ios::app);
+        file << id << "|" << name << "|"
+             << age << "|" << phone << "\n";
+        file.close();
+    }
 };
 
-struct Policy
+class Policy
 {
-    int policyId;
-    int customerId;
+public:
+    int id, customerId, duration;
     string type;
-    double amount;
-    int duration;
-    double premium;
+    double amount, premium;
+
+    bool create()
+    {
+        cout << "Enter customer ID: ";
+        cin >> customerId;
+
+        cout << "Enter policy type (Life/Health/Vehicle/Property): ";
+        cin >> type;
+
+        cout << "Enter coverage amount: ";
+        cin >> amount;
+
+        cout << "Enter duration in years: ";
+        cin >> duration;
+
+        if (amount <= 0 || duration <= 0)
+        {
+            cout << "Invalid amount or duration!\n";
+            return false;
+        }
+
+        double rate = 0;
+
+        if (type == "Life")
+            rate = 0.03;
+        else if (type == "Health")
+            rate = 0.05;
+        else if (type == "Vehicle")
+            rate = 0.04;
+        else if (type == "Property")
+            rate = 0.02;
+
+        if (rate == 0)
+        {
+            cout << "Invalid policy type!\n";
+            return false;
+        }
+
+        premium = amount * rate * duration;
+        cout << "Premium: " << premium << "\n";
+
+        return true;
+    }
+
+    void display()
+    {
+        cout << "\nPolicy ID: " << id;
+        cout << "\nCustomer ID: " << customerId;
+        cout << "\nType: " << type;
+        cout << "\nCoverage: " << amount;
+        cout << "\nDuration: " << duration << " years";
+        cout << "\nPremium: " << premium << "\n";
+    }
+
+    void save()
+    {
+        ofstream file("policies.txt", ios::app);
+        file << id << "|" << customerId << "|"
+             << type << "|" << amount << "|"
+             << duration << "|" << premium << "\n";
+        file.close();
+    }
 };
 
 Customer customers[100];
@@ -37,95 +124,57 @@ void addCustomer()
         return;
     }
 
-    Customer c;
-    c.id = customerCount + 1;
-
-    cout << "Enter customer name: ";
-    cin >> ws;
-    getline(cin, c.name);
-
-    cout << "Enter age: ";
-    cin >> c.age;
-
-    cout << "Enter phone number: ";
-    cin >> c.phone;
-
-    customers[customerCount] = c;
-    customerCount++;
-
-    ofstream file("customers.txt", ios::app);
-    file << c.id << "|" << c.name << "|"
-         << c.age << "|" << c.phone << "\n";
-    file.close();
+    customers[customerCount].id = customerCount + 1;
+    customers[customerCount].addCustomer();
+    customers[customerCount].save();
 
     cout << "Customer added successfully!\n";
-    cout << "Customer ID: " << c.id << "\n";
+    customerCount++;
 }
 
-// View Customers
+// View Customers - while loop
 void viewCustomers()
 {
     if (customerCount == 0)
     {
-        cout << "No customers available.\n";
+        cout << "No customers found!\n";
         return;
     }
 
-    for (int i = 0; i < customerCount; i++)
+    int i = 0;
+
+    while (i < customerCount)
     {
-        cout << "\nCustomer ID: " << customers[i].id;
-        cout << "\nName: " << customers[i].name;
-        cout << "\nAge: " << customers[i].age;
-        cout << "\nPhone: " << customers[i].phone << "\n";
+        customers[i].display();
+        i++;
     }
 }
 
-// Calculate Premium
-double calculatePremium(double amount, string type,
-                        int duration)
+// Create Policy - for loop
+void addPolicy()
 {
-    double rate;
-
-    if (type == "Life")
-        rate = 0.03;
-    else if (type == "Health")
-        rate = 0.05;
-    else if (type == "Vehicle")
-        rate = 0.04;
-    else if (type == "Property")
-        rate = 0.02;
-    else
-        return -1;
-
-    return amount * rate * duration;
-}
-
-// Create Policy
-void createPolicy()
-{
-    if (policyCount >= 100)
-    {
-        cout << "Policy limit reached!\n";
-        return;
-    }
-
     if (customerCount == 0)
     {
         cout << "Add a customer first!\n";
         return;
     }
 
-    Policy p;
-    p.policyId = policyCount + 1;
+    if (policyCount >= 100)
+    {
+        cout << "Policy limit reached!\n";
+        return;
+    }
 
-    cout << "Enter customer ID: ";
-    cin >> p.customerId;
+    policies[policyCount].id = policyCount + 1;
+
+    if (!policies[policyCount].create())
+        return;
 
     bool found = false;
 
     for (int i = 0; i < customerCount; i++)
     {
-        if (customers[i].id == p.customerId)
+        if (customers[i].id == policies[policyCount].customerId)
         {
             found = true;
             break;
@@ -138,104 +187,56 @@ void createPolicy()
         return;
     }
 
-    cout << "Policy types: Life, Health, Vehicle, Property\n";
-    cout << "Enter policy type: ";
-    cin >> p.type;
+    policies[policyCount].save();
+    cout << "Policy created successfully!\n";
+    cout << "Policy ID: " << policies[policyCount].id << "\n";
 
-    cout << "Enter coverage amount: ";
-    cin >> p.amount;
-
-    cout << "Enter duration in years: ";
-    cin >> p.duration;
-
-    if (p.amount <= 0 || p.duration <= 0)
-    {
-        cout << "Amount and duration must be positive!\n";
-        return;
-    }
-
-    p.premium = calculatePremium(
-        p.amount, p.type, p.duration);
-
-    if (p.premium < 0)
-    {
-        cout << "Invalid policy type!\n";
-        return;
-    }
-
-    policies[policyCount] = p;
     policyCount++;
-
-    ofstream file("policies.txt", ios::app);
-    file << p.policyId << "|" << p.customerId << "|"
-         << p.type << "|" << p.amount << "|"
-         << p.duration << "|" << p.premium << "\n";
-    file.close();
-
-    cout << "\nPolicy created successfully!\n";
-    cout << "Policy ID: " << p.policyId << "\n";
-    cout << "Total premium: " << p.premium << "\n";
 }
 
-// View Policies
+// View Policies - for loop
 void viewPolicies()
 {
     if (policyCount == 0)
     {
-        cout << "No policies available.\n";
+        cout << "No policies found!\n";
         return;
     }
 
     for (int i = 0; i < policyCount; i++)
     {
-        cout << "\nPolicy ID: " << policies[i].policyId;
-        cout << "\nCustomer ID: " << policies[i].customerId;
-        cout << "\nType: " << policies[i].type;
-        cout << "\nCoverage: " << policies[i].amount;
-        cout << "\nDuration: " << policies[i].duration
-             << " years";
-        cout << "\nTotal premium: " << policies[i].premium
-             << "\n";
+        policies[i].display();
     }
 }
 
-// Search Policy
+// Search Policy - while loop
 void searchPolicy()
 {
     int id;
+
     cout << "Enter policy ID: ";
     cin >> id;
 
-    for (int i = 0; i < policyCount; i++)
+    int i = 0;
+
+    while (i < policyCount && policies[i].id != id)
     {
-        if (policies[i].policyId == id)
-        {
-            cout << "\nPolicy found!\n";
-            cout << "Customer ID: "
-                 << policies[i].customerId << "\n";
-            cout << "Type: " << policies[i].type << "\n";
-            cout << "Coverage: " << policies[i].amount << "\n";
-            cout << "Duration: " << policies[i].duration
-                 << " years\n";
-            cout << "Premium: " << policies[i].premium << "\n";
-            return;
-        }
+        i++;
     }
 
-    cout << "Policy not found!\n";
+    if (i == policyCount)
+        cout << "Policy not found!\n";
+    else
+        policies[i].display();
 }
 
 int main()
 {
-    int choice;
+    int choice = -1;
 
-    do
+    while (choice != 0)
     {
-        cout << "-------------------------------------\n";
-        cout << "-                                   -\n";
-        cout << "===== INSURANCE POLICY MANAGEMENT ===\n";
-        cout << "-                                   -\n";
-        cout << "-------------------------------------\n";
+        cout << "\n===== INSURANCE MANAGEMENT =====\n";
         cout << "1. Add Customer\n";
         cout << "2. View Customers\n";
         cout << "3. Create Policy\n";
@@ -243,6 +244,7 @@ int main()
         cout << "5. Search Policy\n";
         cout << "0. Exit\n";
         cout << "Enter choice: ";
+
         cin >> choice;
 
         switch (choice)
@@ -250,28 +252,35 @@ int main()
         case 1:
             addCustomer();
             break;
+
         case 2:
             viewCustomers();
             break;
+
         case 3:
-            createPolicy();
+            addPolicy();
             break;
+
         case 4:
             viewPolicies();
             break;
+
         case 5:
             searchPolicy();
             break;
+
         case 0:
-            cout << "Thank you for using the system!\n";
+            cout << "Thank you!\n";
             break;
+
         default:
             cout << "Invalid choice!\n";
         }
-    } while (choice != 0);
+    }
 
     return 0;
 }
+
 
 // #include <iostream>
 // using namespace std;
